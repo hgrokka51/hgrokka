@@ -610,22 +610,22 @@
       <div id="work-panel" class="md:block hidden">
         <div class="work-panel-inner p-5 grid grid-cols-4 gap-4">
           <a href="#project-tbauctions" class="work-card block" data-quick-project="tbauctions">
-            <div class="thumb mb-2" style="background-image: url('images/glasses-thumb.png'); background-size: cover; background-position: center;"></div>
+            <div class="thumb mb-2" style="background-image: url('/.netlify/images?url=/images/glasses-thumb.png&w=200&fm=webp'); background-size: cover; background-position: center;"></div>
             <div class="text-fg text-sm" data-i18n="project.tbauctions.title">Pulse frame</div>
 
           </a>
           <a href="#project-rovu" class="work-card block" data-quick-project="rovu">
-            <div class="thumb mb-2" style="background-image: url('images/h-thumb.png'); background-size: cover; background-position: center;"></div>
+            <div class="thumb mb-2" style="background-image: url('/.netlify/images?url=/images/h-thumb.png&w=200&fm=webp'); background-size: cover; background-position: center;"></div>
             <div class="text-fg text-sm" data-i18n="project.rovu.title">CMF Hitbox</div>
 
           </a>
           <a href="#project-tldrecords" class="work-card block" data-quick-project="tldrecords">
-            <div class="thumb mb-2" style="background-image: url('images/y-thumb.png'); background-size: cover; background-position: center;"></div>
+            <div class="thumb mb-2" style="background-image: url('/.netlify/images?url=/images/y-thumb.png&w=200&fm=webp'); background-size: cover; background-position: center;"></div>
             <div class="text-fg text-sm" data-i18n="project.tldrecords.title">YamLog</div>
 
           </a>
           <a href="#project-adaptia" class="work-card block" data-quick-project="adaptia">
-            <div class="thumb mb-2" style="background-image: url('images/l-thumb.png'); background-size: cover; background-position: center;"></div>
+            <div class="thumb mb-2" style="background-image: url('/.netlify/images?url=/images/l-thumb.png&w=200&fm=webp'); background-size: cover; background-position: center;"></div>
             <div class="text-fg text-sm" data-i18n="project.adaptia.title">Process oriented medical App</div>
 
           </a>
@@ -764,7 +764,7 @@
     <!-- Featured -->
     <div class="grid md:grid-cols-2 gap-6">
       <a href="#project-tbauctions" class="block work-card js-open-project" data-project="tbauctions">
-        <div class="thumb mb-4" style="aspect-ratio: 16/10; background-image: url('images/galsses.png'); background-size: cover; background-position: center; background-color: transparent;"></div>
+        <div class="thumb mb-4 js-lazy-bg" data-bg="/.netlify/images?url=/images/galsses.png&w=900&fm=webp" style="aspect-ratio: 16/10; background-size: cover; background-position: center; background-color: transparent;"></div>
         <div class="flex justify-between items-baseline">
           <h3 class="text-lg" data-i18n="project.tbauctions.title">Pulse Frame</h3>
           <span class="mono text-xs text-fg3" data-i18n="project.tbauctions.kicker">Conceptual sports products</span>
@@ -775,7 +775,7 @@
         </p>
       </a>
       <a href="#project-rovu" class="block work-card js-open-project" data-project="rovu">
-        <div class="thumb mb-4" style="aspect-ratio: 16/10; background-image: url('images/hitbox.png'); background-size: cover; background-position: center; background-color: transparent;"></div>
+        <div class="thumb mb-4 js-lazy-bg" data-bg="/.netlify/images?url=/images/hitbox.png&w=900&fm=webp" style="aspect-ratio: 16/10; background-size: cover; background-position: center; background-color: transparent;"></div>
         <div class="flex justify-between items-baseline">
           <h3 class="text-lg" data-i18n="project.rovu.title">CMF Hitbox</h3>
           <span class="mono text-xs text-fg3" data-i18n="project.rovu.kicker">intelligent controller</span>
@@ -786,7 +786,7 @@
         </p>
       </a>
       <a href="#project-tldrecords" class="block work-card js-open-project" data-project="tldrecords">
-        <div class="thumb mb-4" style="aspect-ratio: 16/10; background-image: url('images/gouzhi.jpg'); background-size: cover; background-position: center; background-color: transparent;"></div>
+        <div class="thumb mb-4 js-lazy-bg" data-bg="/.netlify/images?url=/images/gouzhi.jpg&w=900&fm=webp" style="aspect-ratio: 16/10; background-size: cover; background-position: center; background-color: transparent;"></div>
         <div class="flex justify-between items-baseline">
           <h3 class="text-lg" data-i18n="project.tldrecords.title">YamLog</h3>
           <span class="mono text-xs text-fg3" data-i18n="project.tldrecords.kicker">Crochet UI Design</span>
@@ -797,7 +797,7 @@
         </p>
       </a>
       <a href="#project-adaptia" class="block work-card js-open-project" data-project="adaptia">
-        <div class="thumb mb-4" style="aspect-ratio: 16/10; background-image: url('images/laoren.jpg'); background-size: cover; background-position: center; background-color: transparent;"></div>
+        <div class="thumb mb-4 js-lazy-bg" data-bg="/.netlify/images?url=/images/laoren.jpg&w=900&fm=webp" style="aspect-ratio: 16/10; background-size: cover; background-position: center; background-color: transparent;"></div>
         <div class="flex justify-between items-baseline">
           <h3 class="text-lg" data-i18n="project.adaptia.title">Process oriented medical App</h3>
           <span class="mono text-xs text-fg3" data-i18n="project.adaptia.kicker">Aging-friendly UI Design</span>
@@ -1594,7 +1594,7 @@ const PROJECTS = {
 
     const approachHTML = approachItems.map(item => `
       <div>
-        <div class="frame tall media mb-3" style="background-image: url('${item.img}'); background-size: cover; background-position: center; background-color: #1a1a1a;"></div>
+        <div class="frame tall media mb-3" style="background-image: url('/.netlify/images?url=/${item.img}&w=800&fm=webp'); background-size: cover; background-position: center; background-color: #1a1a1a;"></div>
     <div class="mono text-xs text-fg3">${item.num} — ${item.label}</div>
     <p class="text-fg2 text-sm mt-1">${item.text}</p>
   </div>
@@ -1602,7 +1602,7 @@ const PROJECTS = {
 
     const figuresHTML = p.figures.map((fig, index) => `
       <div>
-        <div class="frame media" style="background-image: url('images/${p.id}-fig${index+1}.png'); background-size: cover; background-position: center; background-color: #1a1a1a;"></div>
+        <div class="frame media" style="background-image: url('/.netlify/images?url=/images/${p.id}-fig${index+1}.png&w=1200&fm=webp'); background-size: cover; background-position: center; background-color: #1a1a1a;"></div>
         <div class="mono text-xs text-fg3 mt-3">${fig.caption}</div>
       </div>
     `).join('');
@@ -1677,7 +1677,7 @@ const PROJECTS = {
       <div class="stars mono text-xs my-16 md:my-24">* &nbsp; * &nbsp; *</div>
 
       <section class="reveal">
-        <div class="frame wide media" style="background-image: url('images/${p.id}-side.png'); background-size: cover; background-position: center; background-color: #1a1a1a;"></div>
+        <div class="frame wide media" style="background-image: url('/.netlify/images?url=/images/${p.id}-side.png&w=1600&fm=webp'); background-size: cover; background-position: center; background-color: #1a1a1a;"></div>
         <div class="mono text-xs text-fg3 mt-3">${p.heroFig.caption}</div>
       </section>
 
@@ -2095,6 +2095,34 @@ const PROJECTS = {
     const displayTitle = (document.documentElement.lang === 'zh' && titleZh) ? titleZh : p.title;
     document.title = `${displayTitle} — Project · Aaron Sananes`;
   };
+})();
+</script>
+
+<script>
+(function initLazyBg() {
+  function loadBg(el) {
+    var src = el.dataset.bg;
+    if (src) el.style.backgroundImage = "url('" + src + "')";
+  }
+  function observeAll() {
+    var els = document.querySelectorAll('.js-lazy-bg');
+    if (!els.length) return;
+    if (!('IntersectionObserver' in window)) {
+      els.forEach(loadBg);
+      return;
+    }
+    var io = new IntersectionObserver(function(entries) {
+      entries.forEach(function(e) {
+        if (e.isIntersecting) { loadBg(e.target); io.unobserve(e.target); }
+      });
+    }, { rootMargin: '300px' });
+    els.forEach(function(el) { io.observe(el); });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', observeAll);
+  } else {
+    observeAll();
+  }
 })();
 </script>
 
