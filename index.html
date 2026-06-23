@@ -1,0 +1,2102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Aaron Sananes — Design Engineer & Product Designer (Replica) [v6]</title>
+
+<!-- ============================================================
+     1) FONT LOADING — Inter (sans) + JetBrains Mono (mono)
+     ============================================================ -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="style"
+  href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet"
+  href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap">
+
+<!-- Tailwind (CDN, JIT) -->
+<script src="https://cdn.tailwindcss.com"></script>
+
+<!-- ============================================================
+     TAILWIND CONFIG — global font family + colour tokens
+     ============================================================ -->
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          sans:  ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+          mono:  ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+        },
+        colors: {
+          // Dark-mode palette per spec
+          ink:    '#0a0a0a',  // page background
+          ink2:   '#111111',  // panel background
+          fg:     '#f2f2f2',  // primary text
+          fg2:    '#949494',  // secondary / muted
+          fg3:    '#666666',  // tertiary / annotations
+          line:   '#1f1f1f',  // hairline dividers
+        },
+        letterSpacing: {
+          'tightest-3': '-0.03em',
+        },
+      },
+    },
+  }
+</script>
+
+<!-- ============================================================
+     GLOBAL STYLE — typography reset, custom utilities
+     ============================================================ -->
+<style>
+  :root {
+    /* All visual parameters centralised so they're easy to tweak. */
+    --page-bg:       #0a0a0a;
+    --fg:            #f2f2f2;
+    --fg-2:          #949494;
+    --fg-3:          #666666;
+    --line:          #1f1f1f;
+    --nav-hover-y:   -2px;
+    --anim-fast:     0.28s;
+    --easing:        cubic-bezier(.22,.61,.36,1); /* ease-out feel */
+  }
+
+  html, body { background: var(--page-bg); color: var(--fg); }
+  /* Smooth-scroll for nav anchors. JS scrollTo() calls use
+     behavior:'auto' which respects this — so they also become
+     smooth, which is what we want for the "back to work" case. */
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-weight: 400;
+    line-height: 1.6;
+    letter-spacing: -0.01em;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Headings — heavier weight, tight negative tracking */
+  h1, h2, h3, .display {
+    letter-spacing: -0.03em;
+    font-weight: 700;
+    line-height: 1.05;
+  }
+  .display-xl { font-weight: 800; }
+
+  .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+
+  /* Hairline dividers used throughout */
+  .hr-line { border-top: 1px solid var(--line); }
+
+  /* Star divider (* * *) used between sections */
+  .stars {
+    color: var(--fg-3);
+    letter-spacing: 0.6em;
+    text-align: center;
+    user-select: none;
+  }
+
+  /* -------------------------------------------------------------
+     NAV LINK ANIMATION
+     - underline grows from centre on hover
+     - sibling links dim (handled via JS toggling a class on <nav>)
+     ------------------------------------------------------------- */
+  .nav-link {
+    position: relative;
+    color: var(--fg-2);
+    font-size: 14px;
+    padding: 4px 2px;
+    transition: color var(--anim-fast) var(--easing),
+                transform var(--anim-fast) var(--easing),
+                opacity var(--anim-fast) var(--easing);
+  }
+  .nav-link::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    right: 50%;
+    bottom: -2px;
+    height: 1px;
+    background: var(--fg);
+    transition: left var(--anim-fast) var(--easing),
+                right var(--anim-fast) var(--easing);
+  }
+  .nav-link:hover {
+    color: var(--fg);
+    transform: translateY(var(--nav-hover-y));
+  }
+  .nav-link:hover::after { left: 0; right: 0; }
+
+  /* When nav is in "focused" state, non-hovered links fade */
+  nav.is-focused .nav-link:not(:hover) { opacity: 0.45; }
+
+  /* -------------------------------------------------------------
+     WORK DROPDOWN PANEL
+     ------------------------------------------------------------- */
+  #work-panel {
+    position: absolute;
+    top: 100%;
+    left: 0; right: 0;
+    margin-top: 14px;
+    opacity: 0;
+    transform: translateY(8px);
+    pointer-events: none;
+    transition: opacity var(--anim-fast) var(--easing),
+                transform var(--anim-fast) var(--easing);
+  }
+  #work-panel.open {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+  .work-panel-inner {
+    background: rgba(15,15,15,0.72);
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 14px;
+  }
+  .work-card {
+    transition: transform var(--anim-fast) var(--easing),
+                background var(--anim-fast) var(--easing);
+  }
+  .work-card:hover {
+    background: rgba(255,255,255,0.04);
+    transform: translateY(-3px);
+  }
+  .work-card .thumb {
+    aspect-ratio: 16 / 10;
+    background: linear-gradient(135deg, #1c1c1c 0%, #0f0f0f 100%);
+    overflow: hidden;
+    border-radius: 8px;
+    position: relative;
+  }
+  .work-card .thumb::before {
+    content: "";
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(circle at 30% 30%, rgba(255,255,255,0.06), transparent 50%),
+      repeating-linear-gradient(45deg, rgba(255,255,255,0.02) 0 2px, transparent 2px 5px);
+  }
+
+  /* -------------------------------------------------------------
+     LIST ROW (secondary projects)
+     ------------------------------------------------------------- */
+  .row {
+    display: grid;
+    grid-template-columns: 80px 1fr auto auto;
+    gap: 24px;
+    align-items: center;
+    padding: 18px 0;
+    transition: padding-left var(--anim-fast) var(--easing),
+                color var(--anim-fast) var(--easing);
+  }
+  .row:hover { padding-left: 8px; color: var(--fg); }
+  .row .view {
+    color: var(--fg-2);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    border: 1px solid var(--line);
+    padding: 4px 10px;
+    border-radius: 999px;
+    transition: color var(--anim-fast) var(--easing),
+                border-color var(--anim-fast) var(--easing);
+  }
+  .row:hover .view {
+    color: var(--fg);
+    border-color: rgba(255,255,255,0.35);
+  }
+
+  /* Tech chip */
+  .chip {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--fg-2);
+    padding: 8px 12px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    transition: color var(--anim-fast) var(--easing),
+                border-color var(--anim-fast) var(--easing),
+                transform var(--anim-fast) var(--easing);
+  }
+  .chip:hover {
+    color: var(--fg);
+    border-color: rgba(255,255,255,0.25);
+    transform: translateY(-2px);
+  }
+
+  /* Mobile nav drawer */
+  #mobile-menu {
+    transform: translateY(-8px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--anim-fast) var(--easing),
+                transform var(--anim-fast) var(--easing);
+  }
+  #mobile-menu.open {
+    opacity: 1; transform: translateY(0); pointer-events: auto;
+  }
+
+  /* Avatar canvas wrapper — circular clip, subtle ring */
+  .avatar-shell {
+    width: 220px; height: 220px;
+    border-radius: 50%;
+    overflow: hidden;
+    position: relative;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
+    cursor: pointer;
+  }
+  .avatar-shell canvas { width: 100%; height: 100%; display: block; }
+
+  /* Reveal on scroll */
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.7s var(--easing), transform 0.7s var(--easing);
+  }
+  .reveal.in { opacity: 1; transform: translateY(0); }
+
+  /* Subtle film grain overlay (replaced by external gif grain layer, see body) */
+  .grain::before { display: none; }
+
+  /* -------------------------------------------------------------
+     MICRO-EFFECT 1 — FULLSCREEN GRAIN (gif, fixed, lowest layer)
+     ------------------------------------------------------------- */
+  .grain-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 0;                 /* below all content (content sits at z-index≥1) */
+    background-image: url('https://www.sananes.co/images/grain.gif');
+    background-repeat: repeat;
+    opacity: 0.04;              /* 4% */
+    pointer-events: none;
+  }
+
+  /* -------------------------------------------------------------
+     MICRO-EFFECT 2 — SCANLINE (1s sweep, then 10s pause, loop)
+     - container sits below content (z-index:1), transparent bg,
+       pointer-events:none so it never blocks interaction.
+     - the line itself stays dim (opacity 0.1–0.3).
+     ------------------------------------------------------------- */
+  .scanline {
+    position: fixed;
+    left: 0; right: 0;
+    top: 0;
+    height: 1px;
+    background: transparent;
+    pointer-events: none;
+    z-index: 1;
+    will-change: transform;
+    /* 1s active sweep + 10s pause = 11s total cycle.
+       The keyframes spend 0%→~9.09% (≈1s) sweeping, then hold
+       off-screen until 100%, giving the 10s wait. */
+    animation: scanline-sweep 11s linear infinite;
+  }
+  .scanline::after {
+    /* The visible line is a pseudo-element so the container can stay
+       transparent while the line keeps a dim opacity in 0.1–0.3. */
+    content: "";
+    position: absolute;
+    left: 0; right: 0; top: 0;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.22);
+    opacity: 0.22;
+  }
+  @keyframes scanline-sweep {
+    0%   { transform: translateY(0); }
+    9.09% { transform: translateY(100vh); }   /* ≈1s sweep */
+    9.091% { transform: translateY(-2px); }    /* hide off-screen during the wait */
+    100% { transform: translateY(-2px); }
+  }
+
+  /* -------------------------------------------------------------
+     MICRO-EFFECT 3 — TITLE GLITCH (h1.display-xl only)
+     ------------------------------------------------------------- */
+  .display-xl.glitching {
+    transform: translateX(var(--glitch-x, 0));
+    text-shadow:
+      2px 0 0 rgba(255, 0, 60, 0.75),    /* red channel right */
+      -2px 0 0 rgba(0, 255, 240, 0.75);  /* cyan channel left */
+    transition:
+      transform 120ms cubic-bezier(.2,.8,.2,1),
+      text-shadow 120ms cubic-bezier(.2,.8,.2,1);
+  }
+  .display-xl {
+    transition:
+      transform 220ms cubic-bezier(.22,.61,.36,1),
+      text-shadow 220ms cubic-bezier(.22,.61,.36,1);
+  }
+
+  /* -------------------------------------------------------------
+     CHINESE TYPOGRAPHY — applied when <html lang="zh">
+     - PingFang SC stack for prose
+     - Drop negative letter-spacing (Latin only); keep weights/leading
+     - Keep .mono and version numbers in JetBrains Mono
+     ------------------------------------------------------------- */
+  html[lang="zh"] body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC",
+                 "Microsoft YaHei", "微软雅黑", "Hiragino Sans GB", sans-serif;
+    letter-spacing: 0;
+  }
+  html[lang="zh"] h1,
+  html[lang="zh"] h2,
+  html[lang="zh"] h3,
+  html[lang="zh"] .display,
+  html[lang="zh"] .display-xl {
+    letter-spacing: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC",
+                 "Microsoft YaHei", "微软雅黑", "Hiragino Sans GB", sans-serif;
+  }
+  /* Mono-flagged spans (version numbers, coords, section markers,
+     stack chips) stay in JetBrains Mono in both languages. */
+  html[lang="zh"] .mono {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    letter-spacing: 0;
+  }
+
+  /* Language toggle button — same shape as the version chips next to it */
+  #lang-toggle {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+  }
+  #lang-toggle [data-lang-segment].is-active { color: var(--fg); }
+  #lang-toggle [data-lang-segment]:not(.is-active) { color: var(--fg-3); }
+
+  /* Selection */
+  ::selection { background: #f2f2f2; color: #0a0a0a; }
+
+  /* Scrollbar slimming */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { background: #1a1a1a; border-radius: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+
+  /* ===============================================================
+     PROJECT DETAIL — additions
+     =============================================================== */
+
+  /* Detail "frame" placeholders — same vibe as the index, but used
+     inside the case-study layout (tall, wide, regular). */
+  .frame {
+    aspect-ratio: 16 / 10;
+    background: linear-gradient(135deg, #1c1c1c 0%, #0f0f0f 100%);
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid rgba(255,255,255,0.04);
+  }
+  .frame::before {
+    content: "";
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(circle at 30% 30%, rgba(255,255,255,0.06), transparent 50%),
+      repeating-linear-gradient(45deg, rgba(255,255,255,0.02) 0 2px, transparent 2px 5px);
+  }
+  .frame::after {
+    content: "";
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, transparent 60%, rgba(0,0,0,0.5));
+  }
+  .frame.tall { aspect-ratio: 4 / 5; }
+  .frame.wide { aspect-ratio: 21 / 9; }
+
+  /* Per-frame colour tint overrides — gives each project its own
+     visual mood without needing real images. */
+  .frame.tint-blue::before {
+    background:
+      radial-gradient(circle at 25% 25%, rgba(80,140,255,0.18), transparent 55%),
+      radial-gradient(circle at 80% 70%, rgba(120,200,255,0.10), transparent 50%),
+      repeating-linear-gradient(45deg, rgba(255,255,255,0.02) 0 2px, transparent 2px 5px);
+  }
+  .frame.tint-amber::before {
+    background:
+      radial-gradient(circle at 30% 30%, rgba(255,170,80,0.16), transparent 55%),
+      radial-gradient(circle at 80% 70%, rgba(255,90,120,0.10), transparent 50%),
+      repeating-linear-gradient(45deg, rgba(255,255,255,0.02) 0 2px, transparent 2px 5px);
+  }
+  .frame.tint-violet::before {
+    background:
+      radial-gradient(circle at 25% 25%, rgba(170,90,255,0.18), transparent 55%),
+      radial-gradient(circle at 80% 70%, rgba(80,200,200,0.10), transparent 50%),
+      repeating-linear-gradient(45deg, rgba(255,255,255,0.02) 0 2px, transparent 2px 5px);
+  }
+  .frame.tint-mint::before {
+    background:
+      radial-gradient(circle at 25% 25%, rgba(80,230,180,0.16), transparent 55%),
+      radial-gradient(circle at 80% 70%, rgba(255,255,200,0.10), transparent 50%),
+      repeating-linear-gradient(45deg, rgba(255,255,255,0.02) 0 2px, transparent 2px 5px);
+  }
+
+  /* Media hover lift */
+  .media { transition: transform 0.5s var(--easing); }
+  .media:hover { transform: translateY(-4px); }
+
+  /* Back-link arrow slide */
+  .back-link { transition: color var(--anim-fast) var(--easing); }
+  .back-link svg { transition: transform var(--anim-fast) var(--easing); }
+  .back-link:hover { color: var(--fg); }
+  .back-link:hover svg { transform: translateX(-4px); }
+
+  /* Next-project underline grow */
+  .next-link { position: relative; }
+  .next-link::after {
+    content: "";
+    position: absolute; left: 0; right: 100%; bottom: -4px;
+    height: 1px; background: var(--fg);
+    transition: right 0.5s var(--easing);
+  }
+  .next-link:hover::after { right: 0; }
+
+  /* Staggered children inside the approach grid */
+  .stagger > * {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.8s var(--easing), transform 0.8s var(--easing);
+  }
+  .stagger.in > * { opacity: 1; transform: translateY(0); }
+  .stagger.in > *:nth-child(1) { transition-delay: 0.00s; }
+  .stagger.in > *:nth-child(2) { transition-delay: 0.08s; }
+  .stagger.in > *:nth-child(3) { transition-delay: 0.16s; }
+  .stagger.in > *:nth-child(4) { transition-delay: 0.24s; }
+
+  /* -------------------------------------------------------------
+     VIEW SYSTEM — main vs. detail
+     -------------------------------------------------------------
+     The page is a single document that swaps between two views:
+     "main"  (the home/work list) and "detail" (a single project).
+     The inactive view is taken out of layout (display:none) and the
+     active one fades + lifts in. Without display:none on the idle
+     state, both views would be in the document flow and the active
+     one would render BELOW the (invisible) idle one — making it
+     look like nothing switched.
+     ------------------------------------------------------------- */
+  .view {
+    position: relative;
+    width: 100%;
+    /* IMPORTANT: do NOT set opacity:0 / transform here. The base
+       class should be VISIBLE by default — only is-idle and
+       is-entering should hide it. Otherwise, if a state class ever
+       fails to apply for any reason, the whole main area is blank. */
+    transition: opacity 0.55s var(--easing), transform 0.7s var(--easing);
+    will-change: opacity, transform;
+  }
+  .view[hidden] { display: none !important; }
+
+  /* is-idle: the view is fully out of layout. We use display:none
+     (not just opacity:0) so the inactive view does NOT take up
+     vertical space — otherwise it would push the active view down
+     the page and the user would have to scroll to see it. */
+  .view.is-idle { display: none !important; }
+
+  /* is-entering: the view has just been swapped in. We set the
+     starting state (opacity 0 + translateY) with transition:none
+     so the browser commits it instantly. The very next frame we
+     promote the view to is-active, which kicks off the actual
+     opacity + transform transition. Without this intermediate
+     state the browser would batch the two class changes and skip
+     the animation entirely. */
+  .view.is-entering {
+    display: block;
+    opacity: 0;
+    transform: translateY(28px);
+    pointer-events: none;
+    transition: none;
+  }
+
+  /* is-active: the view is fully visible and interactive. The
+     transition is re-stated explicitly here so the change from
+     is-entering (transition:none) → is-active (transition:0.55s)
+     actually animates the opacity/transform change. */
+  .view.is-active {
+    display: block;
+    opacity: 1 !important;
+    transform: translateY(0) !important;
+    pointer-events: auto;
+    transition: opacity 0.55s var(--easing), transform 0.7s var(--easing);
+    /* Keep the content's top edge below the fixed header. */
+    scroll-margin-top: 0;
+  }
+
+  /* -------------------------------------------------------------
+     PAGE-TRANSITION MASK — sananes.co Work-style reveal
+     -------------------------------------------------------------
+     A full-bleed dark sheet slides up from the bottom, briefly
+     covers the screen while content swaps, then continues to slide
+     up out of view, revealing the new view underneath. The new
+     view's content fades + lifts in slightly behind the mask.
+     ------------------------------------------------------------- */
+  #page-mask {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    background: #0a0a0a;
+    transform: translateY(100%);
+    pointer-events: none;
+    will-change: transform;
+  }
+  #page-mask::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 1px;
+    height: 60vh;
+    background: linear-gradient(180deg, transparent, rgba(255,255,255,0.18), transparent);
+    transform: translate(-50%, -50%) scaleY(0);
+    transform-origin: center;
+    transition: transform 0.6s var(--easing) 0.15s;
+  }
+  #page-mask.is-covering {
+    transform: translateY(0);
+    transition: transform 0.55s cubic-bezier(.76,0,.24,1);
+  }
+  #page-mask.is-covering::before {
+    transform: translate(-50%, -50%) scaleY(1);
+  }
+  #page-mask.is-revealing {
+    transform: translateY(-100%);
+    transition: transform 0.6s cubic-bezier(.76,0,.24,1);
+  }
+  #page-mask.is-revealing::before {
+    transform: translate(-50%, -50%) scaleY(0);
+    transition: transform 0.45s var(--easing);
+  }
+
+  /* Tiny "loading" label that lives on the mask, fades in/out */
+  #page-mask .label {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--fg-3);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.4em;
+    opacity: 0;
+    transition: opacity 0.25s var(--easing);
+  }
+  #page-mask.is-covering .label { opacity: 1; }
+</style>
+</head>
+
+<body class="grain">
+
+<!-- MICRO-EFFECT 1: fullscreen grain (bottom-most layer) -->
+<div class="grain-layer" aria-hidden="true"></div>
+<!-- MICRO-EFFECT 2: scanline (10s sweep loop) -->
+<div class="scanline" aria-hidden="true"></div>
+<!-- Page transition mask (sananes.co-style reveal) -->
+<div id="page-mask" aria-hidden="true"><div class="label">LOADING</div></div>
+
+<!-- ============================================================
+     TOP NAVIGATION
+     ============================================================ -->
+<header class="fixed top-0 left-0 right-0 z-50">
+  <div class="max-w-[1200px] mx-auto px-5 md:px-10 py-5 flex items-center justify-between
+              backdrop-blur-md bg-ink/60 border-b border-line">
+    <!-- Logo — on the detail view it acts as a "go home" trigger -->
+    <a href="#hero" data-home class="mono text-sm tracking-tight text-fg hover:text-white transition-colors">
+      <span>&gt;&nbsp;</span><span data-i18n="brand">Huang&nbsp;Junxuan</span>
+    </a>
+
+    <!-- Desktop nav -->
+    <nav id="main-nav" class="hidden md:flex items-center gap-8 relative">
+      <a href="#about"  class="nav-link" data-i18n="nav.about">About</a>
+      <a href="#work"   class="nav-link" data-trigger="work" data-i18n="nav.work">Work</a>
+
+      <a href="#stack"  class="nav-link" data-i18n="nav.stack">Stack</a>
+      <a href="#contact" class="nav-link" data-i18n="nav.contact">Contact</a>
+
+      <!-- Work hover panel -->
+      <div id="work-panel" class="md:block hidden">
+        <div class="work-panel-inner p-5 grid grid-cols-4 gap-4">
+          <a href="#project-tbauctions" class="work-card block" data-quick-project="tbauctions">
+            <div class="thumb mb-2" style="background-image: url('images/glasses-thumb.png'); background-size: cover; background-position: center;"></div>
+            <div class="text-fg text-sm" data-i18n="project.tbauctions.title">Pulse frame</div>
+
+          </a>
+          <a href="#project-rovu" class="work-card block" data-quick-project="rovu">
+            <div class="thumb mb-2" style="background-image: url('images/h-thumb.png'); background-size: cover; background-position: center;"></div>
+            <div class="text-fg text-sm" data-i18n="project.rovu.title">CMF Hitbox</div>
+
+          </a>
+          <a href="#project-tldrecords" class="work-card block" data-quick-project="tldrecords">
+            <div class="thumb mb-2" style="background-image: url('images/y-thumb.png'); background-size: cover; background-position: center;"></div>
+            <div class="text-fg text-sm" data-i18n="project.tldrecords.title">YamLog</div>
+
+          </a>
+          <a href="#project-adaptia" class="work-card block" data-quick-project="adaptia">
+            <div class="thumb mb-2" style="background-image: url('images/l-thumb.png'); background-size: cover; background-position: center;"></div>
+            <div class="text-fg text-sm" data-i18n="project.adaptia.title">Process oriented medical App</div>
+
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Right meta + CTA -->
+    <div class="hidden md:flex items-center gap-5">
+      <span class="mono text-xs text-fg3">V1.0</span>
+      <span class="mono text-xs text-fg3">17.11.89</span>
+      <button id="lang-toggle"
+              class="text-xs px-3 py-1.5 border border-line rounded-full text-fg2
+                     hover:text-fg hover:border-white/30 transition-all flex items-center gap-1.5
+                     hover:-translate-y-0.5"
+              aria-label="Toggle language">
+        <span data-lang-segment="en">EN</span>
+        <span class="text-fg3">/</span>
+        <span data-lang-segment="zh">中</span>
+      </button>
+    </div>
+
+    <!-- Mobile right cluster: lang toggle + hamburger -->
+    <div class="md:hidden flex items-center gap-3">
+      <button id="lang-toggle-mobile"
+              class="text-xs px-3 py-1.5 border border-line rounded-full text-fg2
+                     hover:text-fg hover:border-white/30 transition-all flex items-center gap-1.5"
+              style="font-family: 'JetBrains Mono', ui-monospace, monospace;"
+              aria-label="Toggle language">
+        <span data-lang-segment="en">EN</span>
+        <span class="text-fg3">/</span>
+        <span data-lang-segment="zh">中</span>
+      </button>
+      <button id="hamburger" class="text-fg" aria-label="Menu">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5">
+          <line x1="3" y1="7"  x2="19" y2="7"/>
+          <line x1="3" y1="15" x2="19" y2="15"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Mobile drawer -->
+  <div id="mobile-menu" class="md:hidden bg-ink/95 backdrop-blur-md border-b border-line">
+    <div class="px-5 py-6 flex flex-col gap-4 text-sm">
+      <a href="#about"   class="text-fg2 hover:text-fg" data-i18n="nav.about">About</a>
+      <a href="#work"    class="text-fg2 hover:text-fg" data-i18n="nav.work">Work</a>
+      <a href="#stack"   class="text-fg2 hover:text-fg" data-i18n="nav.stack">Stack</a>
+      <a href="#contact" class="text-fg2 hover:text-fg" data-i18n="nav.contact">Contact</a>
+    </div>
+  </div>
+</header>
+
+<!-- ============================================================
+     VIEW 1: MAIN (home + work list)
+     ============================================================ -->
+<main id="view-main" class="view is-active max-w-[1200px] mx-auto px-5 md:px-10 pt-36 md:pt-44 relative z-10">
+
+  <section id="hero" class="reveal">
+
+    <div class="mono text-xs text-fg3 flex items-center gap-3 mb-10">
+      
+    </div>
+
+    <div class="grid md:grid-cols-[220px_1fr] gap-10 md:gap-16 items-center">
+      <!-- Avatar canvas -->
+      <div id="avatar" class="avatar-shell mx-auto md:mx-0">
+        <canvas id="avatarCanvas"></canvas>
+      </div>
+
+      <!-- Hero copy -->
+      <div>
+        <div class="mono text-xs text-fg3 mb-4">01 — <span data-i18n="hero.kicker">INTRODUCTION</span></div>
+        <h1 class="display-xl text-[44px] md:text-[88px] leading-[0.95]">
+          <span data-i18n="hero.title1">Industrial&nbsp;Design</span><br>
+          <span class="text-fg2" data-i18n="hero.title2">Student.</span>
+        </h1>
+        <p class="text-fg2 mt-8 max-w-xl text-[15px] md:text-base" data-i18n="hero.body">
+          Collaborate with AI to integrate interface and physical creation, explore the possibility of interaction in cross media practice, and hope to turn ideas into interesting products
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <div class="stars mono text-xs my-24">* &nbsp; * &nbsp; *</div>
+
+  <!-- ============================================================
+       ABOUT
+       ============================================================ -->
+  <section id="about" class="reveal grid md:grid-cols-12 gap-8">
+    <div class="md:col-span-3">
+      <div class="mono text-xs text-fg3">02 — <span data-i18n="about.kicker">ABOUT</span></div>
+    </div>
+    <div class="md:col-span-9 space-y-6 text-[15px] md:text-base">
+      <p data-i18n="about.p1">
+        A little about me — I am a student who is very interested in the traditional industrial design process and am currently learning about each stage. I hope to delve deeper into my studies
+      </p>
+      <p class="text-fg2" data-i18n="about.p2">
+        I usually try interface design and product related visual presentation, have a certain level of modeling skills, and am skilled in using emerging AI tools to assist in idea validation and technology implementation. I aspire to learn design thinking and standards in the field of intelligent interaction, and hope to solidify my abilities through professional training
+      </p>
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-6 pt-6">
+        <div>
+          <div class="mono text-xs text-fg3" data-i18n="about.born">BORN</div>
+          <div class="text-sm" data-i18n="about.bornValue">20th April, 2006</div>
+        </div>
+        <div>
+          <div class="mono text-xs text-fg3" data-i18n="about.location">LOCATION</div>
+          <div class="text-sm" data-i18n="about.locationValue">China / Guang Dong</div>
+        </div>
+        <div>
+          <div class="mono text-xs text-fg3" data-i18n="about.coords">COORDS</div>
+          <div class="mono text-xs">28.2916° N · 16.6291° W</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="stars mono text-xs my-24">* &nbsp; * &nbsp; *</div>
+
+  <!-- ============================================================
+       WORK
+       ============================================================ -->
+  <section id="work" class="reveal">
+    <div class="flex flex-wrap items-end justify-between mb-10 gap-4">
+      <div>
+        <div class="mono text-xs text-fg3">03 — <span data-i18n="work.kicker">WORK</span></div>
+        <h2 class="text-3xl md:text-5xl mt-2" data-i18n="work.title">Selected Projects</h2>
+      </div>
+      <div class="mono text-xs text-fg3 flex gap-6">
+        <span data-i18n="work.tagProjects">PROJECTS &gt;</span>
+        <span data-i18n="work.tagAI">AI-Assisted Products</span>
+        <span data-i18n="work.tagUI">UI Design</span>
+      </div>
+    </div>
+
+    <!-- Featured -->
+    <div class="grid md:grid-cols-2 gap-6">
+      <a href="#project-tbauctions" class="block work-card js-open-project" data-project="tbauctions">
+        <div class="thumb mb-4" style="aspect-ratio: 16/10; background-image: url('images/galsses.png'); background-size: cover; background-position: center; background-color: transparent;"></div>
+        <div class="flex justify-between items-baseline">
+          <h3 class="text-lg" data-i18n="project.tbauctions.title">Pulse Frame</h3>
+          <span class="mono text-xs text-fg3" data-i18n="project.tbauctions.kicker">Conceptual sports products</span>
+        </div>
+        <p class="text-fg2 text-sm mt-2 max-w-md" data-i18n="project.tbauctions.blurb">
+          Nine brands. One messy prototype. An industry with no room
+          for mistakes.
+        </p>
+      </a>
+      <a href="#project-rovu" class="block work-card js-open-project" data-project="rovu">
+        <div class="thumb mb-4" style="aspect-ratio: 16/10; background-image: url('images/hitbox.png'); background-size: cover; background-position: center; background-color: transparent;"></div>
+        <div class="flex justify-between items-baseline">
+          <h3 class="text-lg" data-i18n="project.rovu.title">CMF Hitbox</h3>
+          <span class="mono text-xs text-fg3" data-i18n="project.rovu.kicker">intelligent controller</span>
+        </div>
+        <p class="text-fg2 text-sm mt-2 max-w-md" data-i18n="project.rovu.blurb">
+          Most tools for handling reviews were clunky or robotic.
+          Designed an experience that saved time without sounding robotic.
+        </p>
+      </a>
+      <a href="#project-tldrecords" class="block work-card js-open-project" data-project="tldrecords">
+        <div class="thumb mb-4" style="aspect-ratio: 16/10; background-image: url('images/gouzhi.jpg'); background-size: cover; background-position: center; background-color: transparent;"></div>
+        <div class="flex justify-between items-baseline">
+          <h3 class="text-lg" data-i18n="project.tldrecords.title">YamLog</h3>
+          <span class="mono text-xs text-fg3" data-i18n="project.tldrecords.kicker">Crochet UI Design</span>
+        </div>
+        <p class="text-fg2 text-sm mt-2 max-w-md" data-i18n="project.tldrecords.blurb">
+          An independent record label needed a digital home that felt
+          as deliberate as the music it released.
+        </p>
+      </a>
+      <a href="#project-adaptia" class="block work-card js-open-project" data-project="adaptia">
+        <div class="thumb mb-4" style="aspect-ratio: 16/10; background-image: url('images/laoren.jpg'); background-size: cover; background-position: center; background-color: transparent;"></div>
+        <div class="flex justify-between items-baseline">
+          <h3 class="text-lg" data-i18n="project.adaptia.title">Process oriented medical App</h3>
+          <span class="mono text-xs text-fg3" data-i18n="project.adaptia.kicker">Aging-friendly UI Design</span>
+        </div>
+        <p class="text-fg2 text-sm mt-2 max-w-md" data-i18n="project.adaptia.blurb">
+          A design system built to bend without breaking — adaptive
+          components for products that keep changing.
+        </p>
+      </a>
+    </div>
+
+    <!-- Secondary list -->
+    
+  </section>
+
+  <div class="stars mono text-xs my-24">* &nbsp; * &nbsp; *</div>
+
+  <!-- ============================================================
+       EXPERIENCE
+       ============================================================ -->
+  
+
+  <!-- ============================================================
+       STACK
+       ============================================================ -->
+  <section id="stack" class="reveal">
+    <div class="mono text-xs text-fg3 mb-3">05 — <span data-i18n="stack.kicker">STACK</span></div>
+    <h2 class="text-3xl md:text-5xl mb-10" data-i18n="stack.title">Tools Of The Trade.</h2>
+    <div class="flex flex-wrap gap-2">
+      <span class="chip">&gt;Figma&lt;</span>
+      <span class="chip">&gt;Rhino&lt;</span>
+      <span class="chip">&gt;Creo&lt;</span>
+      <span class="chip">&gt;PS&lt;</span>
+      <span class="chip">&gt;Claude Code&nbsp;Start&lt;</span>
+      <span class="chip">&gt;Keyshot&lt;</span>
+      <span class="chip">&gt;VS Code&lt;</span>
+      <span class="chip">&gt;PR&lt;</span>
+      
+    </div>
+  </section>
+
+  <div class="stars mono text-xs my-24">* &nbsp; * &nbsp; *</div>
+
+  <!-- ============================================================
+       CONTACT
+       ============================================================ -->
+  <section id="contact" class="reveal text-center py-10">
+    <div class="mono text-xs text-fg3">06 — <span data-i18n="contact.kicker">CONTACT</span></div>
+    <h2 class="display-xl text-5xl md:text-7xl mt-4" data-i18n="contact.title">Let's work together.</h2>
+    <p class="text-fg2 max-w-md mx-auto mt-4" data-i18n="contact.body">
+      Available for product design and design engineering engagements.
+    </p>
+    <a href="#"
+       class="inline-block mt-8 mono text-sm px-5 py-3 border border-white/30 rounded-full
+              hover:bg-fg hover:text-ink transition-colors"
+       data-i18n="contact.cta">
+      → Schedule a call
+    </a>
+    <div class="mono text-xs text-fg3 mt-12 tracking-widest">
+      01010101&nbsp;01010101&nbsp;01010101
+    </div>
+  </section>
+
+</main>
+
+<!-- ============================================================
+     VIEW 2: PROJECT DETAIL
+     (content is filled at runtime by the router, see PROJECTS)
+     ============================================================ -->
+<main id="view-detail" class="view is-idle max-w-[1200px] mx-auto px-5 md:px-10 pt-36 md:pt-44 relative z-10"
+      aria-live="polite">
+  <!-- Filled by JS — see router -->
+</main>
+
+<!-- ============================================================
+     FOOTER
+     ============================================================ -->
+<footer class="border-t border-line mt-24 relative z-10">
+  <div class="max-w-[1200px] mx-auto px-5 md:px-10 py-10 flex flex-wrap items-center justify-between gap-4">
+    <div class="mono text-xs text-fg3" data-i18n="footer.copyright">© 2026 — All rights reserved.</div>
+    <div class="flex gap-6 text-sm text-fg2">
+      <a href="#" class="hover:text-fg transition-colors">GitHub</a>
+      <a href="#" class="hover:text-fg transition-colors">Instagram</a>
+      <a href="#" class="hover:text-fg transition-colors">LinkedIn</a>
+      <a href="#" class="hover:text-fg transition-colors">Dribbble</a>
+    </div>
+    <div class="mono text-xs text-fg3">V1.0 · 019asda123123123</div>
+  </div>
+</footer>
+
+<!-- ============================================================
+     2) CANVAS AVATAR — digital-pixel mosaic blur effect
+     ============================================================ -->
+<script>
+const AVATAR = {
+  // ---- TUNABLE PARAMETERS (all centralised) ----
+  blockSize:        14,    // px — bigger = chunkier mosaic
+  offsetStrength:   6,     // px — max random per-block translation
+  noiseAlpha:       0.22,  // 0–1 — strength of pixel noise overlay
+  noiseDensity:     0.35,  // 0–1 — fraction of pixels that get noise
+  channelShift:     2,     // px — RGB chromatic offset
+  hoverEase:        0.12,  // 0–1 — interpolation speed toward target
+  size:             440,   // internal render size (devicePixelRatio scaled)
+};
+
+(function initAvatar() {
+  const canvas = document.getElementById('avatarCanvas');
+  const shell  = document.getElementById('avatar');
+  if (!canvas || !shell) return;
+  const ctx    = canvas.getContext('2d');
+
+  const DPR = Math.min(window.devicePixelRatio || 1, 2);
+  const W = AVATAR.size, H = AVATAR.size;
+  canvas.width  = W * DPR;
+  canvas.height = H * DPR;
+  ctx.scale(DPR, DPR);
+
+  // 1) Build the source portrait on an offscreen canvas ------------
+  const src = document.createElement('canvas');
+  src.width = W; src.height = H;
+  const sx = src.getContext('2d');
+
+  // Background — soft radial
+  const bg = sx.createRadialGradient(W*0.5, H*0.4, 20, W*0.5, H*0.5, W*0.55);
+  bg.addColorStop(0, '#3a3a3a');
+  bg.addColorStop(1, '#0e0e0e');
+  sx.fillStyle = bg;
+  sx.fillRect(0, 0, W, H);
+
+  // Stylised silhouette (head + shoulders) so the page works without
+  // an external photo. Replace with drawImage(yourPhoto, …) at will.
+  sx.fillStyle = '#cfcfcf';
+  // shoulders
+  sx.beginPath();
+  sx.ellipse(W*0.5, H*0.95, W*0.45, H*0.25, 0, Math.PI, 0, true);
+  sx.fill();
+  // neck
+  sx.fillRect(W*0.43, H*0.62, W*0.14, H*0.15);
+  // head
+  sx.beginPath();
+  sx.ellipse(W*0.5, H*0.42, W*0.22, H*0.27, 0, 0, Math.PI*2);
+  sx.fill();
+  // hair
+  sx.fillStyle = '#1a1a1a';
+  sx.beginPath();
+  sx.ellipse(W*0.5, H*0.30, W*0.24, H*0.18, 0, 0, Math.PI*2);
+  sx.fill();
+  // shadow under jaw
+  sx.fillStyle = 'rgba(0,0,0,0.25)';
+  sx.beginPath();
+  sx.ellipse(W*0.5, H*0.58, W*0.18, H*0.06, 0, 0, Math.PI*2);
+  sx.fill();
+  // eye sockets
+  sx.fillStyle = 'rgba(0,0,0,0.45)';
+  sx.beginPath(); sx.ellipse(W*0.43, H*0.43, 7, 4, 0, 0, Math.PI*2); sx.fill();
+  sx.beginPath(); sx.ellipse(W*0.57, H*0.43, 7, 4, 0, 0, Math.PI*2); sx.fill();
+
+  // 2) Animation loop — paint mosaic from source -------------------
+  let strength = 1;        // current effect strength (1 = full, 0 = clear)
+  let target   = 1;        // target driven by hover
+
+  shell.addEventListener('mouseenter', () => target = 0);
+  shell.addEventListener('mouseleave', () => target = 1);
+  shell.addEventListener('touchstart', () => target = target === 1 ? 0 : 1, {passive:true});
+
+  function frame() {
+    // Ease current strength toward target each frame
+    strength += (target - strength) * AVATAR.hoverEase;
+
+    const block  = Math.max(1, AVATAR.blockSize  * strength + 1*(1-strength));
+    const offset = AVATAR.offsetStrength * strength;
+    const shift  = AVATAR.channelShift   * strength;
+
+    // -- Base layer: draw mostly-clear source, dimmer as strength rises --
+    ctx.clearRect(0, 0, W, H);
+    ctx.globalAlpha = 1 - strength * 0.85;
+    ctx.drawImage(src, 0, 0, W, H);
+    ctx.globalAlpha = 1;
+
+    // -- Mosaic layer: sampled blocks with random per-block offset --
+    if (strength > 0.02) {
+      for (let y = 0; y < H; y += block) {
+        for (let x = 0; x < W; x += block) {
+          const ox = (Math.random() - 0.5) * 2 * offset;
+          const oy = (Math.random() - 0.5) * 2 * offset;
+          // Sample a single source pixel — fastest approximation of avg.
+          const sample = sx.getImageData(
+            Math.min(W-1, x + block/2),
+            Math.min(H-1, y + block/2),
+            1, 1
+          ).data;
+          const r = sample[0], g = sample[1], b = sample[2];
+
+          // chromatic split: three channels at offset positions
+          ctx.fillStyle = `rgba(${r},0,0,${0.9*strength})`;
+          ctx.fillRect(x + ox - shift, y + oy, block, block);
+          ctx.fillStyle = `rgba(0,${g},0,${0.9*strength})`;
+          ctx.fillRect(x + ox, y + oy, block, block);
+          ctx.fillStyle = `rgba(0,0,${b},${0.9*strength})`;
+          ctx.fillRect(x + ox + shift, y + oy, block, block);
+        }
+      }
+    }
+
+    // -- Digital noise speckle on top --
+    if (strength > 0.05) {
+      const img = ctx.getImageData(0, 0, W*DPR, H*DPR);
+      const d = img.data;
+      const a = AVATAR.noiseAlpha * strength * 255;
+      const density = AVATAR.noiseDensity * strength;
+      for (let i = 0; i < d.length; i += 4) {
+        if (Math.random() < density) {
+          const n = (Math.random() * a) | 0;
+          d[i]   = Math.min(255, d[i]   + n);
+          d[i+1] = Math.min(255, d[i+1] + n);
+          d[i+2] = Math.min(255, d[i+2] + n);
+        }
+      }
+      ctx.putImageData(img, 0, 0);
+    }
+
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+
+<!-- ============================================================
+     3) NAVIGATION INTERACTIONS
+     ============================================================ -->
+<script>
+(function initNav() {
+  const nav     = document.getElementById('main-nav');
+  const links   = nav.querySelectorAll('.nav-link');
+  const panel   = document.getElementById('work-panel');
+  const trigger = nav.querySelector('[data-trigger="work"]');
+
+  // Generic hover dim
+  links.forEach(a => {
+    a.addEventListener('mouseenter', () => nav.classList.add('is-focused'));
+    a.addEventListener('mouseleave', () => nav.classList.remove('is-focused'));
+  });
+
+  // Work panel open / close with delay-on-leave
+  let closeTimer = null;
+  const open  = () => { clearTimeout(closeTimer); panel.classList.add('open'); };
+  const close = () => { closeTimer = setTimeout(() => panel.classList.remove('open'), 180); };
+
+  trigger.addEventListener('mouseenter', open);
+  trigger.addEventListener('mouseleave', close);
+  panel.addEventListener('mouseenter',  open);
+  panel.addEventListener('mouseleave',  close);
+
+  // Mobile hamburger
+  const burger = document.getElementById('hamburger');
+  const menu   = document.getElementById('mobile-menu');
+  burger.addEventListener('click', () => menu.classList.toggle('open'));
+  menu.querySelectorAll('a').forEach(a =>
+    a.addEventListener('click', () => menu.classList.remove('open'))
+  );
+})();
+
+/* ------------------------------------------------------------------
+ * REVEAL ON SCROLL — IntersectionObserver, lightweight
+ * ------------------------------------------------------------------ */
+(function initReveal() {
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => e.isIntersecting && e.target.classList.add('in'));
+  }, { threshold: 0.12 });
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+})();
+
+/* ------------------------------------------------------------------
+ * MICRO-EFFECT 3 — TITLE GLITCH on h1.display-xl
+ * ------------------------------------------------------------------
+ * Every 3–8s (random) the title glitches for 120ms:
+ *   - visual: `.glitching` class adds ±3px horizontal jitter + red/cyan
+ *     channel split via text-shadow (handled in CSS).
+ *   - textual: every text node inside the h1 is replaced with a same-
+ *     length string of random glitch characters (#%&*+ and junk
+ *     letters/digits), then restored after 120ms.
+ * ------------------------------------------------------------------ */
+(function initTitleGlitch() {
+  const el = document.querySelector('h1.display-xl');
+  if (!el) return;
+
+  const DURATION = 120; // ms the glitch is visible
+  const GLITCH_CHARS = '#%&*+<>!?/\\|=+§±×÷@#$%^&*ABCDEF0123456789';
+
+  // Collect every text node so we can scramble/restore them in place.
+  const textNodes = [];
+  const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null);
+  while (walker.nextNode()) {
+    const node = walker.currentNode;
+    if (node.nodeValue && node.nodeValue.trim().length) {
+      textNodes.push({ node, original: node.nodeValue });
+    }
+  }
+
+  function scramble() {
+    textNodes.forEach(({ node, original }) => {
+      // Treat &nbsp; ( ) like a normal char when measuring length.
+      let out = '';
+      for (let i = 0; i < original.length; i++) {
+        const ch = original[i];
+        if (ch === ' ' || ch === ' ') { out += ch; continue; }
+        out += GLITCH_CHARS[(Math.random() * GLITCH_CHARS.length) | 0];
+      }
+      node.nodeValue = out;
+    });
+  }
+
+  function restore() {
+    textNodes.forEach(({ node, original }) => { node.nodeValue = original; });
+  }
+
+  function tick() {
+    // Random ±3px horizontal shift for this burst
+    const dx = (Math.random() * 6 - 3).toFixed(2);
+    el.style.setProperty('--glitch-x', dx + 'px');
+    el.classList.add('glitching');
+    scramble();
+    setTimeout(() => {
+      el.classList.remove('glitching');
+      restore();
+    }, DURATION);
+
+    // Schedule next burst in 3–8s
+    const next = 3000 + Math.random() * 5000;
+    setTimeout(tick, next);
+  }
+  // Initial kick-off after a short delay
+  setTimeout(tick, 2000);
+})();
+
+/* ------------------------------------------------------------------
+ * LANGUAGE TOGGLE (EN / 中) — bilingual page switch
+ * ------------------------------------------------------------------
+ *  - All static text carries data-i18n="<key>"; this script swaps
+ *    that element's textContent when the language changes.
+ *  - Dynamic project content (rendered into #view-detail by the
+ *    router) reads from PROJECTS_ZH and re-renders via the router's
+ *    exposed __rerenderProject() hook.
+ *  - Choice is persisted in localStorage('lang') and restored on load.
+ * ------------------------------------------------------------------ */
+const I18N = {
+  en: {
+    'brand':                'Huang Junxuan',
+
+    'nav.about':            'About',
+    'nav.work':             'Work',
+    'nav.stack':            'Stack',
+    'nav.contact':          'Contact',
+
+    'hero.kicker':          'INTRODUCTION',
+    'hero.title1':          'Industrial Design',
+    'hero.title2':          'Student.',
+    'hero.body':            'Collaborate with AI to integrate interface and physical creation, explore the possibility of interaction in cross media practice, and hope to turn ideas into interesting products',
+
+    'about.kicker':         'ABOUT',
+    'about.p1':             'A little about me — I am a student who is very interested in the traditional industrial design process and am currently learning about each stage. I hope to delve deeper into my studies',
+    'about.p2':             'I usually try interface design and product related visual presentation, have a certain level of modeling skills, and am skilled in using emerging AI tools to assist in idea validation and technology implementation. I aspire to learn design thinking and standards in the field of intelligent interaction, and hope to solidify my abilities through professional training',
+    'about.born':           'BORN',
+    'about.bornValue':      '7th April, 2006',
+    'about.location':       'LOCATION',
+    'about.locationValue':  'China / Guang Dong',
+    'about.coords':         'COORDS',
+
+    'work.kicker':          'WORK',
+    'work.title':           'Selected Projects',
+    'work.tagProjects':     'PROJECTS >',
+    'work.tagAI':           'AI-Assisted Products',
+    'work.tagUI':           'UI Design',
+
+    'project.tbauctions.title':  'Pulse Frame',
+    'project.tbauctions.kicker': 'Conceptual sports products',
+    'project.tbauctions.blurb':  'ommute & workout. One pair. two frame',
+    'project.rovu.title':        'CMF Hitbox',
+    'project.rovu.kicker':       'intelligent controller',
+    'project.rovu.blurb':        'Stylized. Game. Code. controller.',
+    'project.tldrecords.title':  'YamLog',
+    'project.tldrecords.kicker': 'Crochet UI Design',
+    'project.tldrecords.blurb':  'Record. Review. Focus. Grow. Share',
+    'project.adaptia.title':     'Process oriented medical App',
+    'project.adaptia.kicker':    'Aging-friendly UI Design',
+    'project.adaptia.blurb':     'Healthcare. simplified for elders.',
+
+    'stack.kicker':         'STACK',
+    'stack.title':          'Tools Of The Trade.',
+
+    'contact.kicker':       'CONTACT',
+    'contact.title':        "Forward With My Passion.",
+    'contact.body':         'Hoping to study and grow within this department.',
+    'contact.cta':          '→ Back to manu',
+
+    'footer.copyright':     '© 2026 — All rights reserved.',
+
+    'detail.back':          'Back to work',
+    'detail.caseStudy':     'CASE STUDY',
+    'detail.year':          'YEAR',
+    'detail.role':          'ROLE',
+    'detail.client':        'CLIENT',
+    'detail.sector':        'SECTOR',
+    'detail.document':      'DOCUMENT',
+    'detail.pdfBtn':        'PDF',
+    'detail.prototype':     'PROTOTYPE',
+    'detail.prototypeBtn':  'Prototype',
+    'detail.overview':      'OVERVIEW',
+    'detail.approach':      'APPROACH',
+    'detail.outcome':       'OUTCOME',
+    'detail.nextProject':   'NEXT PROJECT',
+  },
+  zh: {
+    'brand':                '黄俊轩',
+
+    'nav.about':            '关于',
+    'nav.work':             '作品',
+    'nav.stack':            '能力',
+    'nav.contact':          '尾声',
+
+    'hero.kicker':          '自我介绍',
+    'hero.title1':          '工业设计',
+    'hero.title2':          '学生',
+    'hero.body':            '与AI协作融合界面与实体创作，探索跨媒介实践中的交互可能，希望将想法转化为有趣的产品',
+
+    'about.kicker':         '关于',
+    'about.p1':             '关于我 — 我是一名对传统工业设计流程非常感兴趣的学生，目前正在学习各个阶段，希望能深入研究',
+    'about.p2':             '我通常尝试界面设计和产品相关的视觉呈现，具备一定的建模能力，熟练运用新兴AI工具辅助创意验证和技术落地。期望学习智能交互领域的设计思维与标准，希望通过专业训练沉淀自身能力',
+    'about.born':           '出生',
+    'about.bornValue':      '2006年4月20日',
+    'about.location':       '所在地',
+    'about.locationValue':  '中国 / 广东',
+    'about.coords':         '坐标',
+
+    'work.kicker':          '作品',
+    'work.title':           '精选项目',
+    'work.tagProjects':     '项目 >',
+    'work.tagAI':           'AI辅助产品',
+    'work.tagUI':           'UI设计',
+
+    'project.tbauctions.title':  '脉冲镜框',
+    'project.tbauctions.kicker': '概念运动产品',
+    'project.tbauctions.blurb':  '兼具通勤和运动产品. 一副眼镜两个镜框',
+    'project.rovu.title':        'CMF 控制器',
+    'project.rovu.kicker':       '智能控制器',
+    'project.rovu.blurb':        '格斗游戏. 氛围编程. 风格化产品',
+    'project.tldrecords.title':  'YamLog',
+    'project.tldrecords.kicker': '编织应用UI设计',
+    'project.tldrecords.blurb':  '记录. 回顾. 专注. 成长. 分享',
+    'project.adaptia.title':     '流程导向医疗App',
+    'project.adaptia.kicker':    '适老化UI设计',
+    'project.adaptia.blurb':     '医疗健康软件. 适老化',
+
+    'stack.kicker':         '能力',
+    'stack.title':          '我能运用的软件',
+
+    'contact.kicker':       '联系',
+    'contact.title':        '怀揣热爱，步履向前',
+    'contact.body':         '期待进入本专业院系学习成长',
+    'contact.cta':          '→ 回到首页',
+
+    'footer.copyright':     '© 2026 — 保留所有权利。',
+
+    'detail.back':          '返回作品集',
+    'detail.caseStudy':     '案例研究',
+    'detail.year':          '年份',
+    'detail.role':          '角色',
+    'detail.client':        '客户',
+    'detail.sector':        '领域',
+    'detail.document':      '文档',
+    'detail.pdfBtn':        'PDF',
+    'detail.prototype':     '原型',
+    'detail.prototypeBtn':  '原型',
+    'detail.overview':      '概览',
+    'detail.approach':      '方法',
+    'detail.outcome':       '成果',
+    'detail.nextProject':   '下一个项目',
+  },
+};
+
+/* Chinese overrides for the PROJECTS data object. Keys mirror the
+ * fields used by renderProject(): title/role/client/sector/lede/
+ * overview1/overview2/approachHeading/outcomeText, plus an `approach`
+ * array indexed in the same order as the English `approach`. */
+const PROJECTS_ZH = {
+  tbauctions: {
+    title:           '脉冲镜框',
+    role:            '产品设计师',
+    client:          'TB Auctions',
+    sector:          '概念智能运动产品',
+    lede:            '打破日常生活与运动场景的界限，让用户用一副眼镜从容应对办公通勤和户外训练，无需频繁切换设备。',
+    overview1:       '一款集开放声学、健康传感、紫外防护与手势交互于一体的模块化双场景智能音频眼镜。它兼顾实用与科技感，解决了携带多副眼镜、运动中镜框滑落、强光眩目、汗液腐蚀充电口、户外通话风噪以及摄像头隐私顾虑等问题。',
+    overview2:       '智能穿戴设备正成为日常生活的一部分。用户期待单一产品覆盖更多场景，同时对舒适度、隐私安全和续航便利提出更高要求。',
+    approachHeading: '产品海报、展板与使用场景',
+    approach: [
+      { label: '海报',       text: '时尚产品风格' },
+      { label: '展板',       text: '极简工业风格' },
+      { label: '产品使用场景', text: '覆盖双场景' },
+    ],
+    outcomeText:     '眼镜采用卡扣加磁吸的双快拆结构、NFC自动场景识别、多通道骨传导阵列、集成心率传感器的鼻托、智能光带反馈以及霍尔效应佩戴检测。一台设备覆盖全天场景，让出行更便捷；提升舒适与稳定性；将健康监测融入日常；提供智能交互降低学习成本，同时保护用户隐私。',
+  },
+  rovu: {
+    title:           'CMF 控制器',
+    role:            '产品设计师',
+    client:          '个人',
+    sector:          '消费电子产品',
+    lede:            '一款桌面控制器，让你既能流畅对战，又能用语音高效编码，轻松在游戏与创作之间切换。',
+    overview1:       '控制器让手掌自然贴合，发力更舒适。按键布局不仅满足游戏场景下方向键与动作键的高要求，还恰好可借由精简按键支持高频Vibe Coding，硬件布局可共享复用。',
+    overview2:       'AI编程正推动语音交互需求，简单的程序就能把大多数控制器（包括Hitbox）变成Vibe Coding键盘。Hitbox的小众市场催生了高端市场，那些彰显设计风格与做工、同时支持Vibe Coding的迷你Hitbox，可作为高端、奢华的数字产品在市场立足。',
+    approachHeading: '产品细节',
+    approach: [
+      { label: '阳极氧化材质',  text: '点缀色旋钮' },
+      { label: 'ABS塑料',     text: '共享高频按键' },
+      { label: 'PC透明外壳',   text: '复古未来主义风格' },
+    ],
+    outcomeText:     'CMF Hitbox构建独特的差异化卖点。产品凭借辨识度高、风格鲜明的外观精准切入格斗游戏玩家与独立创作者等小众群体；以多功能价值避免同质化价格竞争，与量产外设拉开距离，建立高端产品定位，使其具备商业可行性。产品强调工艺与设计，技术本身相对简单。我认为这是参与完整设计流程、将产品落地的良好起点。',
+  },
+  tldrecords: {
+    title:           'YamLog',
+    role:            '设计师 & 开发者',
+    client:          'TLD Records',
+    sector:          '钩织. 社区软件',
+    lede:            '一款专为编织作者打造的社区应用，让编织作品被完整记录与流通，实现作品价值。',
+    overview1:       '一款记录作品全过程的应用程序，覆盖作品封面、作品展示、社区学习、排名比拼与销售，让用户追踪每一针每一线。可有效解决用户记不住作品参数、零散过程照片难以整理、立体作品难以完整展示、视频教程不完整且零散难以跟随等问题。',
+    overview2:       '编织用户缺乏专业的作品归档工具，现有平台主要依赖社交化的图片分享，无法沉淀创作数据。受Steam、小黑盒等游戏社区平台启发，我认为编织作者同样需要一款集记录、收藏与社区于一体的应用，能够极大增强用户的正反馈与创作动力。',
+    approachHeading: '特色页面展示',
+    approach: [
+      { label: '教程', text: '...' },
+      { label: '排行', text: '...' },
+      { label: '市场', text: '...' },
+    ],
+    outcomeText:     '通过在线调研与深度访谈，我得出以下核心结论：72%的用户愿意记录针数与时长，68%的用户通过编织放松，45%的用户对排名感到焦虑但能接受匿名封闭。用户最想记录的信息依次为：成品照片、所用线材、针号、耗时与针序。功能包含番茄钟+拍摄记录过程、多角度照片合成3D模型、AI拆解视频教程、可选用户竞赛与作品一键上传，有效解决用户痛点。',
+  },
+  adaptia: {
+    title:           '流程导向医疗App',
+    role:            '设计师 & 开发者',
+    client:          '年长用户',
+    sector:          '界面重构. 用户分析',
+    lede:            '一款以"点击推进+环形进度条"为核心交互的APP，引导老年人专注当前步骤，降低认知负担。背景模糊强化不可点击提示，让老年人不再迟疑下一步去哪。',
+    overview1:       '我们的设计目标是打破医院数字化服务的碎片化现状，为老年患者打造一套无需学习即可使用的就医流程引导工具。让技术适应老年人的认知习惯，而非要求他们去适应复杂的应用逻辑，从而有效解决医院流程涉及挂号、候诊、缴费、检查、取药、复诊等多个环节，信息分散在不同单据与窗口的问题。老年人常常困惑先做什么、后做什么，在陌生环境中无所适从。',
+    overview2:       '当前医院的数字化服务面向大众且功能复杂，入口繁多、层级深。老年患者视力、记忆力下降，且对新事物心存畏惧。受后台管理等技术挑战所限，现有App未针对这些特征系统性整合流程并提供可视化指引。',
+    approachHeading: '特色页面展示',
+    approach: [
+      { label: '首页', text: '...' },
+      { label: '不会消失的导航栏', text: '...' },
+      { label: '预约', text: '...' },
+    ],
+    outcomeText:     '基于桌面研究、深度访谈与情境观察，我们发现老年患者就医的核心障碍并非"操作困难"，而是"流程不确定"带来的持续焦虑。老年人普遍难以辨别科室、害怕缴费出错、害怕漏听叫号，在环节切换时频繁求助或放弃，因为不知道下一步该去哪。现有系统的功能节点相对完整，但环节之间的过渡引导存在明显断点。因此本次设计的机会点在于不创造新功能，主动在每一阶段结束时告知老年人下一步该做什么、去哪里，将碎片化的就医流程串联为可预期的路径。我们把就医拆解为清晰的线性步骤，每屏只做一件事，通过右下角的绿色按钮推进，右上角的进度条显示整体进度。',
+  },
+};
+
+(function initI18n() {
+  // The lang-toggle buttons (desktop + mobile)
+  const btns = document.querySelectorAll('#lang-toggle, #lang-toggle-mobile');
+  if (!btns.length) return;
+
+  // Cache the original (English) text per element on first run so we
+  // can still fall back if a key is missing from the EN dictionary.
+  function cacheOriginal(el) {
+    if (el.dataset.i18nOriginal == null) {
+      el.dataset.i18nOriginal = el.textContent;
+    }
+  }
+
+  function applyTo(root) {
+    root.querySelectorAll('[data-i18n]').forEach(el => {
+      cacheOriginal(el);
+      const key = el.getAttribute('data-i18n');
+      const dict = I18N[document.documentElement.lang === 'zh' ? 'zh' : 'en'];
+      const v = dict && dict[key];
+      el.textContent = (v != null) ? v : el.dataset.i18nOriginal;
+    });
+    // Update the toggle button's active segment styling.
+    document.querySelectorAll('#lang-toggle, #lang-toggle-mobile').forEach(b => {
+      b.querySelectorAll('[data-lang-segment]').forEach(seg => {
+        const isActive = seg.getAttribute('data-lang-segment') ===
+                         (document.documentElement.lang === 'zh' ? 'zh' : 'en');
+        seg.classList.toggle('is-active', isActive);
+      });
+    });
+  }
+
+  // Public hook so the router (and anyone else who injects DOM) can
+  // ask the i18n layer to re-apply translations to fresh nodes.
+  window.__applyI18n = (root) => applyTo(root || document);
+
+  function setLang(lang) {
+    const next = (lang === 'zh') ? 'zh' : 'en';
+    document.documentElement.lang = next;
+    localStorage.setItem('lang', next);
+    applyTo(document);
+    // Re-render the open project detail (if any) so the dynamic
+    // template literals pick up the new language. The router exposes
+    // this hook only after it's initialized.
+    if (typeof window.__rerenderProject === 'function') {
+      window.__rerenderProject();
+    }
+  }
+
+  // Restore saved choice (defaults to 'en'). We set the attribute
+  // BEFORE applying so the first applyTo() picks the right dict.
+  const saved = localStorage.getItem('lang') === 'zh' ? 'zh' : 'en';
+  document.documentElement.lang = saved;
+  applyTo(document);
+
+  btns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      setLang(document.documentElement.lang === 'zh' ? 'en' : 'zh');
+    });
+  });
+})();
+
+/* Convenience accessor used by renderProject() to know which
+ * language to render dynamic project content in. */
+function currentLang() {
+  return document.documentElement.lang === 'zh' ? 'zh' : 'en';
+}
+</script>
+
+<!-- ============================================================
+     4) PROJECT DATA + ROUTER (SPA-style hash navigation)
+     ============================================================ -->
+<script>
+/* ------------------------------------------------------------------
+ * PROJECT DATA
+ * ------------------------------------------------------------------
+ * Each project follows the same template used by the original
+ * project-detail.html, populated per project. The router renders
+ * this into the #view-detail container when a project is opened.
+ * ------------------------------------------------------------------ */
+const PROJECTS = {
+  tbauctions: {
+    id:        'tbauctions',
+    title:     'Pulse Frame',
+    year:      '2025-3',
+    role:      'Product Designer',
+    client:    'TB Auctions',
+    sector:    'Concept Smart Sports Products',
+     pdfLink: 'pdfs/glasses.pdf',
+  figmaLink: null,
+    lede:      'Break the boundaries between daily life and sports scenarios, allowing users to handle both office commuting and outdoor training with ease using a single pair of glasses, without the need to frequently switch devices.',
+    overview1: 'A modular dual-scene smart audio glasses that combines open acoustics, health sensors, UV protection, and gesture interaction in one. It balances practicality and tech vibe, solving issues like carrying multiple pairs of glasses, frames slipping during exercise, glare from strong light, sweat corroding charging ports, wind noise during outdoor calls, and privacy concerns with cameras.',
+    overview2: 'Smart wearable devices are becoming part of everyday life. Users expect a single product to cover more scenarios, while also demanding higher comfort, privacy, security, and battery convenience.',
+    approachHeading: 'Product posters, display boards, and usage scenarios',
+    approach: [
+  { num: '01', label: 'Poster',  text: 'Fashion product style', tint: '', img: 'images/cansaibanmian1.jpg' },
+  { num: '02', label: 'Display board',   text: 'Minimalist industrial style', tint: 'tint-blue', img: 'images/cansaibanmian2.jpg' },
+  { num: '03', label: 'Product Usage Scenarios',text: 'Covers both scenarios', tint: 'tint-amber', img: 'images/cansaibanmian3.jpg' },
+    ],
+    figures: [
+      { caption: 'Fig. 02 — details', tint: 'tint-blue' },
+      { caption: 'Fig. 03 — details', tint: 'tint-amber' },
+    ],
+    heroFig:  { caption: 'Fig. 01 — Storefront, redesigned', tint: 'tint-blue' },
+    outcome: [],
+    outcomeText: 'The glasses feature a dual quick-release design with clips and magnetic adsorption, automatic NFC scene recognition, multi-channel bone conduction array, a nose pad with integrated heart rate sensor, smart light strip feedback, and Hall effect wear detection. They cover all-day scenarios in one device, making travel easier; improve comfort and stability; integrate health monitoring into daily life; offer smart interactions that lower the learning curve, while protecting your privacy.',
+    next: { id: 'rovu', title: 'CMF Hitbox'},
+  },
+
+  rovu: {
+    id:        'rovu',
+    title:     'CMF Hitbox',
+    year:      '2025-5',
+    role:      'Product Designer',
+    client:    'Rovu',
+    sector:    'Game. Code. Consumer electronics',
+     pdfLink: null,
+  figmaLink: null,
+    lede:      'A desktop controller that lets you fight smoothly and code efficiently with voice, making it easy to switch between gaming and creating.',
+    overview1: 'The hitbox lets your palm naturally rest on it, making it comfortable to generate force. The button layout not only meets the high demands of directional and action keys in gaming scenarios, but it also happens to allow high-frequency Vibe Coding with simplified buttons, and the hardware layout can be shared.',
+    overview2: 'AI programming is driving demand for voice interaction, and simple programs can turn most controllers into vibe coding keyboards, including hitboxes. The niche market for hitboxes has given rise to a high-end market, where mini hitboxes that show off design style and build quality, while also supporting vibe coding, can act as premium, luxury digital products on the market.',
+    approachHeading: 'Product Details',
+    approach: [
+      { num: '01', label: 'Anodized material',  text: 'Accent Color Knob', tint: '', img: 'images/orange.png' },
+  { num: '02', label: 'ABS plastic',   text: 'Share high-frequency keys', tint: 'tint-blue', img: 'images/button.png' },
+  { num: '03', label: 'PC transparent case',text: 'Retro-futuristic style', tint: 'tint-amber', img: 'images/LCD.png' },
+],
+    figures: [
+      { caption: 'Fig. 02 — Side view of the product', tint: 'tint-mint' },
+      { caption: 'Fig. 03 — Product packaging design',          tint: 'tint-violet' },
+    ],
+    heroFig:  { caption: 'Fig. 01 — Review composer', tint: 'tint-mint' },
+    outcome: [],
+    outcomeText: 'CMF Hitbox builds a unique differentiated core selling point. The product relies on its highly recognizable and distinctive appearance to accurately target niche groups like fighting game players and indie creators. With its multifunctional value, it avoids homogenized price competition, sets itself apart from mass-produced peripherals, and establishes a high-end product positioning, making it commercially viable. The product requires a focus on craftsmanship and design, while the technology itself is relatively simple. I think it’s a good start to get involved in the full design process and see the product come to life.',
+    next: { id: 'tldrecords', title: 'YamLog' },
+  },
+
+  tldrecords: {
+    id:        'tldrecords',
+    title:     'YamLog',
+    year:      '2025-5',
+    role:      'Designer & Developer',
+    client:    'TLD Records',
+    sector:    'Music / Editorial',
+     pdfLink: 'pdfs/yam.pdf',
+  figmaLink: 'https://www.figma.com/make/gfcQS0D5JgAdcgV3hvlr7T/%E4%BC%98%E5%8C%96%E9%92%A9%E7%BB%87app%E7%95%8C%E9%9D%A2?p=f&t=Mgqwt5e50wq5GbVi-0',
+    lede:      'A community application exclusive to crochet authors, allowing crochet works to be fully recorded and circulated, and realizing the value of the works.',
+    overview1: 'An application that records the entire process of a work, covering coverage, work display, community learning, ranking competition, and sales, allowing users to track every stitch. It can effectively solve the problems of users not being able to remember the parameters of their work, difficulty in organizing scattered process photos, difficulty in fully displaying three-dimensional works, incomplete and scattered video tutorials, and difficulty in keeping up.',
+    overview2: 'Hook weaving users lack specialized tools for archiving their works, and existing platforms mainly rely on social photo sharing, which cannot accumulate creative data. Inspired by gaming community platforms such as Steam and Little Black Box, I believe that hook weaving authors also need an application that combines recording, collection, and community, which can greatly enhance user positive feedback and motivation.',
+    approachHeading: 'Featured Page Display',
+    approach: [
+      { num: '01', label: 'Tutorial Library', text: '...', tint: '', img: 'images/tldrecords-approach1.png' },
+  { num: '02', label: 'Community', text: '...', tint: 'tint-mint', img: 'images/tldrecords-approach2.png' },
+  { num: '03', label: 'Market', text: '...', tint: 'tint-violet', img: 'images/tldrecords-approach3.png' },
+],
+    figures: [
+      { caption: 'Fig. 02 — details',  tint: 'tint-amber' },
+      { caption: 'Fig. 03 — details',    tint: 'tint-violet' },
+    ],
+    heroFig:  { caption: 'Fig. 01 — Release page', tint: 'tint-amber' },
+    outcome: [
+    ],
+    outcomeText: 'Through online surveys and in-depth interviews with crochet enthusiasts, I have come to the following core conclusions: 72% of users are willing to record the duration of needle count, 68% relax with crochet, and 45% are anxious about ranking but can accept anonymous closure. The information that users most want to record is, in order: finished product photo, thread used, needle number, time consumption, and needle sequence,The function includes tomato clock+shooting recording process, multi angle photo synthesis 3D model, AI disassembly video tutorial, optional user competition, and one click upload of works, effectively solving users problems',
+    next: { id: 'adaptia', title: 'Process oriented medical App' },
+  },
+
+  adaptia: {
+    id:        'adaptia',
+    title:     'Process oriented medical App',
+    year:      '2025-5',
+    role:      'Designer',
+    client:    'Adaptia',
+    sector:    'Interface overhaul. User analysis',
+    pdfLink: 'pdfs/old.pdf',
+  figmaLink: null,
+    lede:      'An APP with "click to advance+circular progress bar" as the core interaction, guiding the elderly to focus on the current step and reducing cognitive load. Blurring the background enhances non clickable hints, allowing the elderly to not hesitate where to go',
+    overview1: 'Our design goal is to break the fragmented status quo of digital services in hospitals and create a set of medical process guidance tools for elderly patients that can be used without learning. Adapting technology to the cognitive habits of the elderly, rather than requiring them to adapt to complex app logic, effectively solves the problem of hospital processes involving multiple links such as registration, waiting, payment, examination, medication collection, and follow-up visits, where information is scattered across different documents and windows. Elderly people often struggle with what to do first and what to do later, and are at a loss in unfamiliar environments.',
+    overview2: 'The current digital services in hospitals are multi-faceted and aimed at the general population, with complex and hierarchical functional entrances. Elderly patients have decreased vision, memory, and fear of new things. Due to technical challenges such as backend management, existing apps have not systematically integrated processes and provided visual guidance for these characteristics',
+    approachHeading: 'Featured Page Display',
+    approach: [
+      { num: '01', label: 'Home page', text: '...', tint: '', img: 'images/adaptia-approach1.png' },
+  { num: '02', label: 'A navigation bar that wont disappear', text: '...', tint: 'tint-mint', img: 'images/adaptia-approach2.png' },
+  { num: '03', label: 'Booking page', text: '...', tint: 'tint-violet', img: 'images/adaptia-approach3.png' },
+],
+    figures: [
+      { caption: 'Fig. 02 — Clever Interface Ideas',     tint: 'tint-blue' },
+      { caption: 'Fig. 03 — Liquid glass',  tint: 'tint-mint' },
+    ],
+    heroFig:  { caption: 'Fig. 01 — System overview', tint: 'tint-blue' },
+    outcome: [
+     ],
+    outcomeText: 'Based on desktop research, in-depth interviews, and situational observations, we found that the core obstacle for elderly patients seeking medical treatment is not "operational difficulties", but the sustained anxiety caused by "process uncertainty". Elderly people generally have difficulty distinguishing departments, are afraid of making payment mistakes, and are afraid of missing call numbers. They frequently seek help or give up when switching links because they do not know where to go next. The existing system functional nodes are relatively complete, but there are obvious breakpoints in the transition guidance between links. Therefore, the opportunity of this design lies in not creating new features, actively informing the elderly of what to do next and where to go at the end of each stage, and connecting the fragmented medical process into an predictable path. We will break down medical treatment into clear linear steps, with each screen only doing one thing. Push forward through the green button in the lower right corner, and the progress bar in the upper right corner displays the overall progress.',
+    next: { id: 'tbauctions', title: 'Pulse Frame' },
+  },
+};
+
+/* ------------------------------------------------------------------
+ * ROUTER
+ * ------------------------------------------------------------------
+ * Two views live in the same document:
+ *   #view-main   (home + work list)
+ *   #view-detail (single project)
+ *
+ * Hash format:
+ *   (no hash)               -> main view
+ *   #project-<id>           -> detail view, project <id>
+ *   #hero / #work / #about  -> main view, scroll to that section
+ *
+ * Transitions are done with a sananes.co-style mask that slides up
+ * from the bottom, swaps content while covered, then continues
+ * sliding up to reveal the new view.
+ * ------------------------------------------------------------------ */
+(function initRouter() {
+  const mainView   = document.getElementById('view-main');
+  const detailView = document.getElementById('view-detail');
+  const mask       = document.getElementById('page-mask');
+  if (!mainView || !detailView || !mask) return;
+
+  // The currently-shown project id (so we can avoid re-renders)
+  let currentProject = null;
+  // Flag so a programmatic hash update doesn't trigger the cover
+  // animation (we only want that on user-initiated navigation).
+  let suppressHashTransition = false;
+
+  /* ---------- helpers ---------- */
+
+  // Build the detail-view HTML for a given project.
+  function renderProject(p) {
+    // Translation layer for dynamic project content. `tp(field)`
+    // returns the project's localized string for the current
+    // language, falling back to the English original.
+    const lang = (typeof currentLang === 'function') ? currentLang() : 'en';
+    const zh = (typeof PROJECTS_ZH !== 'undefined') ? (PROJECTS_ZH[p.id] || {}) : {};
+    const tp = (key) => (lang === 'zh' && zh[key] != null) ? zh[key] : p[key];
+
+    // Approach + figures use nested arrays whose items also need
+    // localizing. Each ZH override is an array aligned by index.
+    const approachZh = zh.approach || [];
+    const approachItems = p.approach.map((item, i) => ({
+      ...item,
+      label: (lang === 'zh' && approachZh[i] && approachZh[i].label) || item.label,
+      text:  (lang === 'zh' && approachZh[i] && approachZh[i].text)  || item.text,
+    }));
+
+    const approachHTML = approachItems.map(item => `
+      <div>
+        <div class="frame tall media mb-3" style="background-image: url('${item.img}'); background-size: cover; background-position: center; background-color: #1a1a1a;"></div>
+    <div class="mono text-xs text-fg3">${item.num} — ${item.label}</div>
+    <p class="text-fg2 text-sm mt-1">${item.text}</p>
+  </div>
+  `).join('');
+
+    const figuresHTML = p.figures.map((fig, index) => `
+      <div>
+        <div class="frame media" style="background-image: url('images/${p.id}-fig${index+1}.png'); background-size: cover; background-position: center; background-color: #1a1a1a;"></div>
+        <div class="mono text-xs text-fg3 mt-3">${fig.caption}</div>
+      </div>
+    `).join('');
+    const outcomeStats = p.outcome.map(stat => `
+      <div>
+        <div class="display-xl text-3xl md:text-4xl">${stat.value}</div>
+        <div class="mono text-xs text-fg3 mt-1">${stat.label}</div>
+      </div>
+    `).join('');
+
+    return `
+      <section class="reveal">
+        <button type="button"
+                class="back-link mono text-xs text-fg3 flex items-center gap-2 mb-10"
+                data-back>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M9 2 L3 7 L9 12" />
+          </svg>
+          <span data-i18n="detail.back">Back to work</span>
+        </button>
+
+        <div class="mono text-xs text-fg3 mb-4">01 — <span data-i18n="detail.caseStudy">CASE STUDY</span></div>
+
+        <h1 class="display-xl text-[40px] md:text-[88px] leading-[0.95]">
+          ${tp('title')}
+        </h1>
+
+        <div class="grid md:grid-cols-12 gap-8 mt-10">
+          <p class="md:col-span-7 text-fg2 text-base md:text-lg">${tp('lede')}</p>
+          <div class="md:col-span-5 grid grid-cols-2 gap-6 self-start">
+  <!-- YEAR always shown -->
+  <div>
+    <div class="mono text-xs text-fg3" data-i18n="detail.year">YEAR</div>
+    <div class="text-sm mt-1">${p.year}</div>
+  </div>
+
+  <!-- ROLE always shown -->
+  <div>
+    <div class="mono text-xs text-fg3" data-i18n="detail.role">ROLE</div>
+    <div class="text-sm mt-1">${tp('role')}</div>
+  </div>
+
+  <!-- Cell 3: show PDF button if present, otherwise CLIENT -->
+  ${p.pdfLink ? `
+    <div>
+      <div class="mono text-xs text-fg3" data-i18n="detail.document">DOCUMENT</div>
+      <a href="${p.pdfLink}" target="_blank" class="inline-block text-sm mt-1 px-4 py-2 border border-line rounded-full text-fg2 hover:text-fg hover:border-white/30 transition-colors" data-i18n="detail.pdfBtn">PDF</a>
+    </div>
+  ` : `
+    <div>
+      <div class="mono text-xs text-fg3" data-i18n="detail.client">CLIENT</div>
+      <div class="text-sm mt-1">${tp('client')}</div>
+    </div>
+  `}
+
+  <!-- Cell 4: show Figma button if present, otherwise SECTOR -->
+  ${p.figmaLink ? `
+    <div>
+      <div class="mono text-xs text-fg3" data-i18n="detail.prototype">PROTOTYPE</div>
+      <a href="${p.figmaLink}" target="_blank" class="inline-block text-sm mt-1 px-4 py-2 border border-line rounded-full text-fg2 hover:text-fg hover:border-white/30 transition-colors" data-i18n="detail.prototypeBtn">Prototype</a>
+    </div>
+  ` : `
+    <div>
+      <div class="mono text-xs text-fg3" data-i18n="detail.sector">SECTOR</div>
+      <div class="text-sm mt-1">${tp('sector')}</div>
+    </div>
+  `}
+</div>
+        </div>
+      </section>
+
+      <div class="stars mono text-xs my-16 md:my-24">* &nbsp; * &nbsp; *</div>
+
+      <section class="reveal">
+        <div class="frame wide media" style="background-image: url('images/${p.id}-side.png'); background-size: cover; background-position: center; background-color: #1a1a1a;"></div>
+        <div class="mono text-xs text-fg3 mt-3">${p.heroFig.caption}</div>
+      </section>
+
+      <div class="stars mono text-xs my-16 md:my-24">* &nbsp; * &nbsp; *</div>
+
+      <section class="reveal grid md:grid-cols-12 gap-8">
+        <div class="md:col-span-3">
+          <div class="mono text-xs text-fg3">02 — <span data-i18n="detail.overview">OVERVIEW</span></div>
+        </div>
+        <div class="md:col-span-9 space-y-6 text-[15px] md:text-base">
+          <p>${tp('overview1')}</p>
+          <p class="text-fg2">${tp('overview2')}</p>
+        </div>
+      </section>
+
+      <div class="stars mono text-xs my-16 md:my-24">* &nbsp; * &nbsp; *</div>
+
+      <section class="reveal">
+        <div class="mono text-xs text-fg3 mb-3">03 — <span data-i18n="detail.approach">APPROACH</span></div>
+        <h2 class="text-3xl md:text-5xl mb-12 max-w-3xl">${tp('approachHeading')}</h2>
+        <div class="grid md:grid-cols-3 gap-6 stagger">
+          ${approachHTML}
+        </div>
+      </section>
+
+      <div class="stars mono text-xs my-16 md:my-24">* &nbsp; * &nbsp; *</div>
+
+      <section class="reveal grid md:grid-cols-2 gap-6">
+        ${figuresHTML}
+      </section>
+
+      <div class="stars mono text-xs my-16 md:my-24">* &nbsp; * &nbsp; *</div>
+
+      <section class="reveal grid md:grid-cols-12 gap-8">
+        <div class="md:col-span-3">
+          <div class="mono text-xs text-fg3">04 — <span data-i18n="detail.outcome">OUTCOME</span></div>
+        </div>
+        <div class="md:col-span-9 space-y-8">
+          <div class="grid grid-cols-2 md:grid-cols-3 gap-6">
+            ${outcomeStats}
+          </div>
+          <p class="text-fg2 text-[15px] md:text-base max-w-2xl">${tp('outcomeText')}</p>
+        </div>
+      </section>
+
+      <div class="stars mono text-xs my-16 md:my-24">* &nbsp; * &nbsp; *</div>
+
+      <section class="reveal text-center py-10">
+        <div class="mono text-xs text-fg3" data-i18n="detail.nextProject">NEXT PROJECT</div>
+        <a href="#project-${p.next.id}"
+   class="next-link inline-block display-xl text-3xl md:text-6xl mt-4 js-open-project"
+   data-project="${p.next.id}">
+  ${(lang === 'zh' && PROJECTS_ZH[p.next.id]) ? PROJECTS_ZH[p.next.id].title : p.next.title}
+</a>
+      </section>
+    `;
+  }
+
+  // Mark a view as "active", "entering", or "idle" for the swap.
+  // (We no longer use is-leaving — the old view goes straight to
+  // is-idle while the mask is covering, so there's no in-between
+  // fading-out state to manage.)
+  function setViewState(el, state) {
+    el.classList.remove('is-active', 'is-idle', 'is-entering');
+    el.classList.add('is-' + state);
+
+    // Belt-and-suspenders: also set display via inline !important.
+    // CSS class rules with !important normally win, but if there's
+    // any cascade quirk (Tailwind, browser extension, whatever) the
+    // inline !important guarantees the OLD view is actually out of
+    // layout and the NEW view is actually in it. This is the fix
+    // for "detail content shows up at the bottom of the page".
+    if (state === 'is-idle') {
+      el.style.setProperty('display', 'none', 'important');
+    } else {
+      el.style.setProperty('display', 'block', 'important');
+    }
+  }
+
+  // Re-run the reveal-on-scroll observer over a freshly-rendered view.
+  function observeReveals(root) {
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('in');
+          io.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.12 });
+    root.querySelectorAll('.reveal, .stagger').forEach(el => {
+      // Make sure they're visible to the observer even when the
+      // view is still hidden — unobserve and re-observe after a tick.
+      el.classList.remove('in');
+      io.observe(el);
+    });
+  }
+
+  /* ---------- the sananes-style cover transition ----------
+   *
+   * IMPORTANT: this function does NOT touch the scroll position.
+   * The user is left exactly where they were when they clicked, and
+   * the mask covers any layout shift. The caller (showProject /
+   * showMain) is responsible for scrolling to wherever they want
+   * the user to land AFTER the transition is done.
+   *
+   * Phases:
+   *   1. Cover the screen (mask slides up from the bottom).
+   *   2. Once the mask is fully covering, the caller has already
+   *      rendered any new content (work callback). We then:
+   *        a. Take the OLD view out of layout (is-idle → display:none,
+   *           both via class and inline !important as a fallback).
+   *        b. Put the NEW view into layout at its starting state
+   *           (is-entering → display:block + opacity:0 + offset, no
+   *           transition) and force a reflow.
+   *        c. On the next animation frame, promote the new view to
+   *           is-active so its opacity/transform actually transitions.
+   *   3. Slide the mask up and out, revealing the new view fading
+   *      in behind it.
+   */
+  let isTransitioning = false;
+
+  function transition(newView, work) {
+    // Re-entrancy guard: ignore clicks that arrive while a transition
+    // is already running. Otherwise two rapid clicks would stack two
+    // cover/reveal cycles and the second one would end up revealing
+    // the wrong view.
+    if (isTransitioning) return;
+    isTransitioning = true;
+
+    // Phase 1: cover (we deliberately do NOT scroll the user to
+    // the top here — the mask will hide the view while the layout
+    // swaps beneath it, and showProject/showMain will scroll to
+    // the correct position AFTER the transition is done).
+    mask.classList.remove('is-revealing');
+    mask.classList.add('is-covering');
+
+    const coverEnd = 550; // matches CSS transition duration
+    setTimeout(() => {
+      // Phase 2: do any work the caller queued (e.g. attach reveal
+      // observers to the freshly-rendered content). This runs while
+      // the mask is fully covering the screen.
+      work();
+
+      // Phase 2a: hide every view that is NOT the destination.
+      // setViewState also sets inline display:!important as a
+      // fallback so the old view is definitely out of layout.
+      [mainView, detailView].forEach(v => {
+        if (v !== newView) setViewState(v, 'is-idle');
+      });
+
+      // Phase 2b: put the new view into layout at its starting
+      // state (opacity 0, lifted 28px). transition:none on the
+      // is-entering class makes this commit instantly.
+      setViewState(newView, 'is-entering');
+
+      // Force a reflow so the browser actually paints the entering
+      // state. Without this, the browser would batch the next class
+      // change with this one and skip the opacity transition.
+      void newView.offsetHeight;
+
+      // Phase 2c: on the next frame, kick off the actual
+      // opacity + transform transition.
+      requestAnimationFrame(() => {
+        setViewState(newView, 'is-active');
+      });
+
+      // Phase 3: reveal the mask. The new view fades + lifts in
+      // behind it.
+      mask.classList.remove('is-covering');
+      mask.classList.add('is-revealing');
+
+      setTimeout(() => {
+        mask.classList.remove('is-revealing');
+        isTransitioning = false;
+      }, 620);
+    }, coverEnd);
+  }
+
+  /* ---------- navigation actions ---------- */
+
+  function showMain(hash) {
+    // Remove any old detail content so it doesn't leak.
+    detailView.innerHTML = '';
+    currentProject = null;
+
+    // Destination is the main view (its content is already in the
+    // DOM, so the work callback is empty). NOTE: this used to be
+    // transition(detailView, ...) which pointed at the wrong view —
+    // that's what caused the "back button doesn't switch" bug.
+    transition(mainView, () => {});
+
+    // After the transition is fully done (~1170ms), land the user
+    // on the requested section. The transition itself does NOT touch
+    // scroll — the mask covers the layout change, and we only scroll
+    // here so the user ends up on e.g. #work (Selected projects),
+    // not at the very top of the page.
+    setTimeout(() => {
+      const target = document.querySelector(hash);
+      if (target && hash && hash !== '#hero') {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else {
+        window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+      }
+    }, 1200);
+
+    // Restore the default document title.
+    document.title = 'Aaron Sananes — Design Engineer & Product Designer (Replica)';
+  }
+
+  function showProject(id, opts = {}) {
+    const p = PROJECTS[id];
+    if (!p) {
+      // Unknown project id — just clear the hash.
+      if (location.hash) {
+        suppressHashTransition = true;
+        history.replaceState(null, '', location.pathname + location.search);
+      }
+      return;
+    }
+
+    // Same project already shown? Treat as a no-op UNLESS the caller
+    // forces it (used by the click handler, since clicking the same
+    // dropdown card while the hash is unchanged wouldn't fire
+    // hashchange at all).
+    if (currentProject === id && !opts.force) return;
+
+    currentProject = id;
+
+    // Render the new project HTML into the detail view BEFORE the
+    // transition starts — that way, when the mask finishes covering,
+    // the content is already in the DOM and the enter animation can
+    // play against it.
+    detailView.innerHTML = renderProject(p);
+
+    // The work callback runs while the mask is fully covering. We
+    // use it to re-attach the reveal-on-scroll observer to the new
+    // .reveal / .stagger elements.
+    transition(detailView, () => {
+      observeReveals(detailView);
+      // Apply translations to the freshly-injected detail markup.
+      if (typeof window.__applyI18n === 'function') {
+        window.__applyI18n(detailView);
+      }
+    });
+
+    // After the transition finishes (~1170ms), land the user at the
+    // top of the detail view. We keep their current scroll position
+    // DURING the transition (so the mask covers the layout change
+    // and the user doesn't see a jump to top), and only scroll once
+    // the new view is fully revealed.
+    setTimeout(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    }, 1200);
+
+    // Update the document title so the tab label matches the project.
+    document.title = `${p.title} — Project · Aaron Sananes`;
+  }
+
+  /* ---------- hash parser ---------- */
+
+  function readHash() {
+    const h = (location.hash || '').replace(/^#/, '');
+    if (h.startsWith('project-')) {
+      return { type: 'project', id: h.slice('project-'.length) };
+    }
+    if (h) {
+      return { type: 'section', hash: '#' + h };
+    }
+    return { type: 'home', hash: '#hero' };
+  }
+
+  function applyRoute() {
+    const r = readHash();
+    if (r.type === 'project') {
+      showProject(r.id);
+    } else {
+      // Going home (or to a section) — only animate if we were
+      // already in the detail view.
+      if (currentProject) {
+        showMain(r.hash);
+      } else {
+        // Already on main, just smooth-scroll.
+        const target = document.querySelector(r.hash);
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+      document.title = 'Aaron Sananes — Design Engineer & Product Designer (Replica)';
+    }
+  }
+
+  /* ---------- event wiring ----------
+   *
+   * IMPORTANT: the click handlers below call showProject / showMain
+   * DIRECTLY, instead of relying solely on the hashchange event.
+   * This is the actual fix for the "animation plays but content
+   * doesn't change" bug. Reasons:
+   *
+   *   1. If hashchange doesn't fire (some browser/plugin scenarios),
+   *      the click alone still triggers the transition.
+   *   2. If the user clicks the SAME card twice, the second click
+   *      wouldn't change the hash and therefore wouldn't fire
+   *      hashchange — calling showProject({force:true}) handles this.
+   *   3. The hash is still updated (so the URL reflects the state
+   *      and browser back/forward works), but the transition is
+   *      driven by the click.
+   */
+
+  // Project cards: open the project directly, then sync the URL hash
+  // so back/forward keeps working.
+  document.addEventListener('click', (e) => {
+    const card = e.target.closest('.js-open-project');
+    if (card) {
+      e.preventDefault();
+      const id = card.getAttribute('data-project');
+      if (!id || !PROJECTS[id]) return;
+
+      // Sync the URL without re-triggering the route: the click
+      // already drives the transition. We just want the URL to
+      // reflect the state so back/forward work.
+      if (location.hash !== '#project-' + id) {
+        suppressHashTransition = true;
+        location.hash = 'project-' + id;
+      }
+
+      // Drive the actual content switch immediately.
+      showProject(id, { force: true });
+      return;
+    }
+
+    // Back button
+    const back = e.target.closest('[data-back]');
+    if (back) {
+      e.preventDefault();
+      if (location.hash !== '#work') {
+        suppressHashTransition = true;
+        location.hash = 'work';
+      }
+      showMain('#work');
+      return;
+    }
+
+    // Nav links (About / Work / Experience / Stack / Contact).
+    // On the main view, the default browser behavior already gives
+    // us smooth scrolling (via the CSS `scroll-behavior: smooth` on
+    // <html>), so we let it through. On the detail view the anchor
+    // target is in the hidden main view, so we have to switch views
+    // first and then let showMain handle the scroll.
+    const navLink = e.target.closest('.nav-link');
+    if (navLink && currentProject) {
+      e.preventDefault();
+      const hash = navLink.getAttribute('href') || '#hero';
+      if (location.hash !== hash) {
+        suppressHashTransition = true;
+        location.hash = hash;
+      }
+      showMain(hash);
+      return;
+    }
+  });
+
+  // Logo: when on a detail view, click takes you home and animates.
+  document.querySelectorAll('[data-home]').forEach(el => {
+    el.addEventListener('click', (e) => {
+      if (currentProject) {
+        e.preventDefault();
+        if (location.hash !== '#hero') {
+          suppressHashTransition = true;
+          location.hash = 'hero';
+        }
+        showMain('#hero');
+      }
+      // Otherwise let the in-page hash anchor work as usual.
+    });
+  });
+
+  // React to back/forward and manual hash edits (e.g. user pastes a
+  // #project-xxx URL into the address bar). The click handlers above
+  // suppress this listener for their own programmatic hash changes.
+  window.addEventListener('hashchange', () => {
+    if (suppressHashTransition) {
+      suppressHashTransition = false;
+      return;
+    }
+    applyRoute();
+  });
+
+  // Initial render — handle a deep link like #project-tbauctions.
+  console.log('[router v6] initialized, hash =', location.hash || '(empty)');
+  applyRoute();
+
+  // Expose a hook the i18n layer can call to re-render the currently
+  // open project after a language switch. It rebuilds the detail
+  // view's HTML against the active language WITHOUT replaying the
+  // page-transition mask (we just swap the markup in place and
+  // re-apply i18n + reveal observers).
+  window.__rerenderProject = () => {
+    if (!currentProject) return;
+    const p = PROJECTS[currentProject];
+    if (!p) return;
+    detailView.innerHTML = renderProject(p);
+    if (typeof window.__applyI18n === 'function') {
+      window.__applyI18n(detailView);
+    }
+    observeReveals(detailView);
+    // Re-trigger the reveal IO entries that were already visible
+    // before the swap (the new nodes have no .in class).
+    detailView.querySelectorAll('.reveal, .stagger').forEach(el => {
+      const rect = el.getBoundingClientRect();
+      if (rect.top < window.innerHeight && rect.bottom > 0) {
+        el.classList.add('in');
+      }
+    });
+    // Title may have changed in the new language — refresh tab label.
+    const titleZh = (typeof PROJECTS_ZH !== 'undefined' && PROJECTS_ZH[p.id])
+                    ? PROJECTS_ZH[p.id].title : null;
+    const displayTitle = (document.documentElement.lang === 'zh' && titleZh) ? titleZh : p.title;
+    document.title = `${displayTitle} — Project · Aaron Sananes`;
+  };
+})();
+</script>
+
+</body>
+</html>
